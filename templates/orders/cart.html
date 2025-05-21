@@ -1,0 +1,77 @@
+{% extends 'orders/base.html' %}
+{% block content %}
+<div class="container py-5">
+  <h1 class="mb-4 text-center fw-bold">🛒 Your Shopping Cart</h1>
+
+  {% if cart_items %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle text-center shadow-sm">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">Image</th>
+            <th scope="col">Item</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Subtotal</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in cart_items %}
+          <tr>
+            <td>
+              {% if entry.menu_item.image_url %}
+              <img src="{{ entry.menu_item.image_url }}" alt="{{ entry.menu_item.name }}" class="img-fluid rounded" style="max-width: 60px;">
+              {% else %}
+              <span class="text-muted">No Image</span>
+              {% endif %}
+            </td>
+            <td class="fw-semibold">{{ entry.menu_item.name }}</td>
+            <td>
+              <div class="d-flex justify-content-center align-items-center">
+                <form method="post" action="{% url 'update_cart' entry.menu_item.id %}" class="d-inline me-1">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="decrease">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">−</button>
+                </form>
+                <span class="px-2">{{ entry.quantity }}</span>
+                <form method="post" action="{% url 'update_cart' entry.menu_item.id %}" class="d-inline ms-1">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="increase">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">+</button>
+                </form>
+              </div>
+            </td>
+            <td>${{ entry.subtotal|floatformat:2 }}</td>
+            <td>
+              <form method="post" action="{% url 'remove_from_cart' entry.menu_item.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
+      <a href="{% url 'menu' %}" class="btn btn-outline-primary">
+        ← Continue Shopping
+      </a>
+      <div class="text-end ms-auto">
+        <h4 class="fw-bold">Total: ${{ cart_total|floatformat:2 }}</h4>
+        <a href="{% url 'checkout' %}" class="btn btn-success btn-lg mt-2">
+          ✅ Proceed to Checkout
+        </a>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center" role="alert">
+      Your cart is currently empty.
+    </div>
+    <div class="text-center mt-3">
+      <a href="{% url 'menu' %}" class="btn btn-primary">Back to Menu</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
