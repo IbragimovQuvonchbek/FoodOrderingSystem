@@ -10,18 +10,29 @@ class MenuItem(models.Model):
     def __str__(self):
         return self.name
 
+STATUS_CHOICES = [
+    ('Pending', 'Pending'),
+    ('Submitted', 'Submitted'),
+    ('Completed', 'Completed'),
+    ('Cancelled', 'Cancelled'),
+]
+
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    customer_email = models.EmailField(blank=True)
+    customer_email = models.EmailField(blank=True, null=True)
+    delivery_address = models.TextField(blank=True, null=True)
+    delivery_lat = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    delivery_lng = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=50, default='Pending')
-
-    def __str__(self):
-        return f"Order #{self.id}"
 
     def total_price(self):
-        total = sum(item.menu_item.price * item.quantity for item in self.orderitem_set.all())
-        return total
+        return sum(item.menu_item.price * item.quantity for item in self.orderitem_set.all())
+
+    def __str__(self):
+        return f"#{self.id}"
+
+
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)

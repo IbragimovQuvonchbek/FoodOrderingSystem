@@ -14,7 +14,9 @@
           <h5 class="card-title fw-semibold">{{ item.name }}</h5>
           <p class="card-text text-muted small">{{ item.description|truncatechars:100 }}</p>
           <p class="card-text mt-auto fs-5 fw-bold">${{ item.price }}</p>
-          <a href="{% url 'add_to_cart' item.id %}" class="btn btn-outline-primary mt-3">Add to Cart</a>
+          <button class="btn btn-outline-primary mt-3 add-to-cart-btn" data-menu-item-id="{{ item.id }}">
+              Add to Cart
+          </button>
         </div>
       </div>
     </div>
@@ -22,4 +24,28 @@
 
   </div>
 </div>
+
+<script>
+  $(document).ready(function() {
+    $('.add-to-cart-btn').click(function(e) {
+      e.preventDefault();
+      const url = $(this).data('url');
+
+      $.ajax({
+        url: url,
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken // assumes csrftoken var defined in base.html as I suggested earlier
+        },
+        success: function(response) {
+          alert('Item added to cart!');
+          // Optionally update cart UI here
+        },
+        error: function(xhr, status, error) {
+          alert('Failed to add item to cart.');
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}

@@ -5,7 +5,7 @@
 
   {% if cart_items %}
     <div class="table-responsive">
-      <table class="table table-bordered table-hover align-middle text-center shadow-sm">
+      <table class="table table-bordered table-hover align-middle text-center shadow-sm" id="cart-table">
         <thead class="table-dark">
           <tr>
             <th scope="col">Image</th>
@@ -17,7 +17,7 @@
         </thead>
         <tbody>
           {% for entry in cart_items %}
-          <tr>
+          <tr data-menu-item-id="{{ entry.menu_item.id }}">
             <td>
               {% if entry.menu_item.image_url %}
               <img src="{{ entry.menu_item.image_url }}" alt="{{ entry.menu_item.name }}" class="img-fluid rounded" style="max-width: 60px;">
@@ -28,25 +28,14 @@
             <td class="fw-semibold">{{ entry.menu_item.name }}</td>
             <td>
               <div class="d-flex justify-content-center align-items-center">
-                <form method="post" action="{% url 'update_cart' entry.menu_item.id %}" class="d-inline me-1">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="decrease">
-                  <button type="submit" class="btn btn-sm btn-outline-secondary">−</button>
-                </form>
-                <span class="px-2">{{ entry.quantity }}</span>
-                <form method="post" action="{% url 'update_cart' entry.menu_item.id %}" class="d-inline ms-1">
-                  {% csrf_token %}
-                  <input type="hidden" name="action" value="increase">
-                  <button type="submit" class="btn btn-sm btn-outline-secondary">+</button>
-                </form>
+                <button class="btn btn-sm btn-outline-secondary me-1 btn-decrease">−</button>
+                <span class="px-2 quantity">{{ entry.quantity }}</span>
+                <button class="btn btn-sm btn-outline-secondary ms-1 btn-increase">+</button>
               </div>
             </td>
-            <td>${{ entry.subtotal|floatformat:2 }}</td>
+            <td class="subtotal">${{ entry.subtotal|floatformat:2 }}</td>
             <td>
-              <form method="post" action="{% url 'remove_from_cart' entry.menu_item.id %}">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
-              </form>
+              <button class="btn btn-sm btn-danger btn-remove">Remove</button>
             </td>
           </tr>
           {% endfor %}
@@ -59,7 +48,7 @@
         ← Continue Shopping
       </a>
       <div class="text-end ms-auto">
-        <h4 class="fw-bold">Total: ${{ cart_total|floatformat:2 }}</h4>
+        <h4 class="fw-bold">Total: $<span id="cart-total">{{ cart_total|floatformat:2 }}</span></h4>
         <a href="{% url 'checkout' %}" class="btn btn-success btn-lg mt-2">
           ✅ Proceed to Checkout
         </a>
@@ -74,4 +63,102 @@
     </div>
   {% endif %}
 </div>
+
+<script>
+// Get CSRF token from cookie
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+function updateCart(menuItemId, action) {
+  fetch("{% url 'ajax_update_cart' %}", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRFToken': csrftoken,
+    },
+    body: new URLSearchParams({
+      'menu_item_id': menuItemId,
+      'action': action,
+    })
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Network response was not ok');
+    return response.json();
+  })
+  .then(data => {
+    // Find the row by menu item id
+    const row = document.querySelector(`tr[data-menu-item-id="${menuItemId}"]`);
+    if (!row) return;
+
+    if (action === 'remove') {
+      // Remove row from table
+      row.remove();
+    } else {
+      // Update quantity and subtotal cells
+      row.querySelector('.quantity').textContent = data.quantity;
+      row.querySelector('.subtotal').textContent = `$${data.subtotal.toFixed(2)}`;
+    }
+    // Update total price
+    const totalElem = document.getElementById('cart-total');
+    if (totalElem) {
+      totalElem.textContent = data.total.toFixed(2);
+    }
+
+    // If no rows left, show empty cart message
+    const tbody = document.querySelector('#cart-table tbody');
+    if (tbody.children.length === 0) {
+      document.querySelector('.container').innerHTML = `
+        <div class="alert alert-info text-center" role="alert">
+          Your cart is currently empty.
+        </div>
+        <div class="text-center mt-3">
+          <a href="{% url 'menu' %}" class="btn btn-primary">Back to Menu</a>
+        </div>
+      `;
+    }
+  })
+  .catch(error => {
+    console.error('Error updating cart:', error);
+    alert('Failed to update cart. Please try again.');
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.btn-increase').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const menuItemId = btn.closest('tr').dataset.menuItemId;
+      updateCart(menuItemId, 'increase');
+    });
+  });
+
+  document.querySelectorAll('.btn-decrease').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const menuItemId = btn.closest('tr').dataset.menuItemId;
+      updateCart(menuItemId, 'decrease');
+    });
+  });
+
+  document.querySelectorAll('.btn-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to remove this item from your cart?')) {
+        const menuItemId = btn.closest('tr').dataset.menuItemId;
+        updateCart(menuItemId, 'remove');
+      }
+    });
+  });
+});
+</script>
 {% endblock %}

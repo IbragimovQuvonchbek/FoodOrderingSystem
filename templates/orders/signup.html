@@ -1,0 +1,16 @@
+{% extends 'orders/base.html' %}
+{% block content %}
+<div class="container d-flex justify-content-center align-items-center vh-100">
+  <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+    <h2 class="text-center mb-4">📝 Sign Up</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-success w-100">Sign Up</button>
+    </form>
+    <div class="text-center mt-3">
+      <small>Already have an account? <a href="{% url 'login' %}">Log in</a></small>
+    </div>
+  </div>
+</div>
+{% endblock %}

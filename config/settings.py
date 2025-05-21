@@ -61,6 +61,10 @@ DATABASES = {
     }
 }
 
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'menu'
+LOGOUT_REDIRECT_URL = 'menu'
+
 # Password validation (default settings)
 AUTH_PASSWORD_VALIDATORS = [
     {

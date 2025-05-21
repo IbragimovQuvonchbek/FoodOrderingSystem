@@ -1,9 +1,62 @@
 {% extends 'orders/base.html' %}
 {% block content %}
 <h1>Checkout</h1>
-<form method="post">
+<form method="post" id="checkout-form">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form.customer_email.label_tag }}<br>
+    {{ form.customer_email }}<br><br>
+
+    {{ form.delivery_address.label_tag }}<br>
+    {{ form.delivery_address }}<br><br>
+
+    {{ form.delivery_lat }}
+    {{ form.delivery_lng }}
+
+    <div id="map" style="width: 100%; height: 400px; margin-bottom: 1rem;"></div>
+
     <button type="submit" class="btn btn-primary">Place Order</button>
 </form>
+
+<script>
+    let map;
+    let marker;
+
+    function initMap() {
+        const initialPosition = { lat: 40.7128, lng: -74.0060 }; // Default to New York City
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: initialPosition,
+            zoom: 12,
+        });
+
+        marker = new google.maps.Marker({
+            position: initialPosition,
+            map: map,
+            draggable: true,
+        });
+
+        // Update hidden form fields on marker drag
+        google.maps.event.addListener(marker, 'dragend', function() {
+            const position = marker.getPosition();
+            document.getElementById("id_delivery_lat").value = position.lat();
+            document.getElementById("id_delivery_lng").value = position.lng();
+
+            // Optional: Reverse geocode to update delivery_address textarea
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({'location': position}, function(results, status) {
+                if (status === 'OK' && results[0]) {
+                    document.getElementById("id_delivery_address").value = results[0].formatted_address;
+                }
+            });
+        });
+
+        // Initialize hidden fields and textarea with default position
+        document.getElementById("id_delivery_lat").value = initialPosition.lat;
+        document.getElementById("id_delivery_lng").value = initialPosition.lng;
+    }
+</script>
+
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAiuDlEKrwdjcS6p61R66OgAHOX9S5uZXQ&callback=initMap">
+</script>
 {% endblock %}
