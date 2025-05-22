@@ -42,7 +42,7 @@
 
 ```bash
 git clone https://github.com/IbragimovQuvonchbek/FoodOrderingSystem
-cd golden-burgers
+cd FoodOrderingSystem
 ```
 
 ### Set up Virtual Environment and Install Dependencies
