@@ -41,7 +41,7 @@
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/golden-burgers.git
+git clone https://github.com/IbragimovQuvonchbek/FoodOrderingSystem
 cd golden-burgers
 ```
 
